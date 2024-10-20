@@ -56,15 +56,14 @@ func init() {
 }
 
 func readConfig() {
+
 	var err error
-	if cfgFile == "" {
-		log.Fatal().Msg("config file is required")
-	}
+	if cfgFile != "" {
+		cfgBytes, err = os.ReadFile(cfgFile)
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to read config file")
 
-	cfgBytes, err = os.ReadFile(cfgFile)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to read config file")
-
+		}
 	}
 
 }
