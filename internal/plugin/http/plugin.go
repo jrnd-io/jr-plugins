@@ -144,7 +144,7 @@ func (p *Plugin) InitializeFromConfig(config Config) error {
 
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
 
 	var err error
 

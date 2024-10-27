@@ -92,7 +92,7 @@ func (p *Plugin) Init(_ context.Context, cfgBytes []byte) error {
 	return nil
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
 
 	var req esapi.IndexRequest
 

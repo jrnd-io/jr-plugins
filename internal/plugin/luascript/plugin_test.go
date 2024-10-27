@@ -65,7 +65,7 @@ func TestProducer(t *testing.T) {
 				map[string]string{
 					"h1": "v1",
 					"h2": "v2",
-				})
+				}, nil)
 			if err != nil {
 				t.Error(err)
 			}

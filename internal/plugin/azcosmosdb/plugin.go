@@ -81,7 +81,7 @@ func (p *Plugin) Init(_ context.Context, cfgBytes []byte) error {
 
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
 
 	// This is ugly but it works
 	var jsonMap map[string]interface{}

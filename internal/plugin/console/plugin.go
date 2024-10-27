@@ -51,11 +51,15 @@ func (p *Plugin) Close(_ context.Context) error {
 	return nil
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
 	fmt.Printf("Key: %s\n", string(k))
 	fmt.Printf("Value: %s\n", string(v))
 	fmt.Println("Headers:")
 	for key, value := range headers {
+		fmt.Printf("  %s: %s\n", key, value)
+	}
+	fmt.Println("ConfigParameters:")
+	for key, value := range configParams {
 		fmt.Printf("  %s: %s\n", key, value)
 	}
 

@@ -25,9 +25,10 @@ package wasm_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/jrnd-io/jr-plugins/internal/plugin/wasm"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestWASMPlugin(t *testing.T) {
@@ -54,7 +55,7 @@ func TestWASMPlugin(t *testing.T) {
 			err := p.InitializeFromConfig(ctx, tc.config)
 			assert.NoError(t, err)
 
-			_, err = p.Produce([]byte("somekey"), []byte("someval"), nil)
+			_, err = p.Produce([]byte("somekey"), []byte("someval"), nil, nil)
 			assert.NoError(t, err)
 		})
 

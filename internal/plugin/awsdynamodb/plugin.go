@@ -72,7 +72,7 @@ func (p *Plugin) Init(ctx context.Context, cfgBytes []byte) error {
 	return nil
 }
 
-func (p *Plugin) Produce(_ []byte, val []byte, headers map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(_ []byte, val []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
 
 	var jsonMap map[string]interface{}
 	if err := json.Unmarshal(val, &jsonMap); err != nil {

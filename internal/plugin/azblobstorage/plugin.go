@@ -90,7 +90,7 @@ func (p *Plugin) Init(ctx context.Context, cfgBytes []byte) error {
 
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
 
 	var key string
 	if len(k) == 0 || strings.ToLower(string(k)) == "null" {

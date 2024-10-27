@@ -29,12 +29,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/jrnd-io/jrv2/pkg/jrpc"
+
+	"os"
+	"sync"
 
 	"github.com/jrnd-io/jr-plugins/internal/plugin"
 	"github.com/tetratelabs/wazero"
-	"os"
-	"sync"
 
 	wazapi "github.com/tetratelabs/wazero/api"
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
@@ -119,7 +121,7 @@ func (p *Plugin) InitializeFromConfig(ctx context.Context, config Config) error 
 	return nil
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, h map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, h map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
 	ctx := context.Background()
 
 	p.lock.Lock()

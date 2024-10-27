@@ -85,7 +85,7 @@ func (p *Plugin) Init(ctx context.Context, configBytes []byte) error {
 	return nil
 }
 
-func (p *Plugin) Produce(key []byte, v []byte, headers map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(key []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
 
 	collection := p.client.Database(p.database).Collection(p.collection)
 

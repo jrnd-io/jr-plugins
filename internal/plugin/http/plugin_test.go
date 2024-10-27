@@ -253,7 +253,7 @@ func TestProducer(t *testing.T) {
 				fakeUrl,
 				mr.serveHTTP)
 
-			_, err := pl.Produce([]byte("key"), defaultBody, nil)
+			_, err := pl.Produce([]byte("key"), defaultBody, nil, nil)
 			if err != nil {
 				t.Error(err)
 			}
