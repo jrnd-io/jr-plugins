@@ -90,7 +90,24 @@ func (p *Plugin) Init(ctx context.Context, cfgBytes []byte) error {
 
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
+
+	container := p.configuration.Container.Name
+	if configParams["container.name"] != "" {
+		container = configParams["container.name"]
+	}
+
+	// adding metadata to the blob
+	metadata := make(map[string]*string)
+	for k, v := range configParams {
+		if strings.HasPrefix(k, "metadata.") {
+			metadata[strings.TrimPrefix(k, "metadata.")] = &v
+		}
+	}
+	// adding headers as metadata
+	for k, v := range headers {
+		metadata[k] = &v
+	}
 
 	var key string
 	if len(k) == 0 || strings.ToLower(string(k)) == "null" {
@@ -99,16 +116,15 @@ func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[st
 	} else {
 		key = string(k)
 	}
+	metadata["key"] = &key
 
 	resp, err := p.client.UploadBuffer(
 		context.Background(),
-		p.configuration.Container.Name,
+		container,
 		key,
 		v,
 		&azblob.UploadBufferOptions{
-			Metadata: map[string]*string{
-				"key": &key,
-			},
+			Metadata: metadata,
 		},
 	)
 	if err != nil {

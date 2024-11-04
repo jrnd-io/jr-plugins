@@ -107,13 +107,28 @@ func (p *Plugin) Init(_ context.Context, cfgBytes []byte) error {
 
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
 
-	stmt := fmt.Sprintf("INSERT INTO %s.%s JSON ?",
-		p.configuration.Keyspace,
-		p.configuration.Table)
+	keyspace := p.configuration.Keyspace
+	if configParams["keyspace"] != "" {
+		keyspace = configParams["keyspace"]
+	}
+	table := p.configuration.Table
+	if configParams["table"] != "" {
+		table = configParams["table"]
+	}
+	consistencyLevel := p.consistencyLevel
+	if configParams["consistency_level"] != "" {
+		consistencyLevel, err := gocql.MustParseConsistency(configParams["consistency_level"])
+		if err != nil {
+			return nil, err
+		}
+		p.consistencyLevel = consistencyLevel
+	}
+
+	stmt := fmt.Sprintf("INSERT INTO %s.%s JSON ?", keyspace, table)
 	if err := p.session.Query(stmt, string(v)).
-		Consistency(p.consistencyLevel).Exec(); err != nil {
+		Consistency(consistencyLevel).Exec(); err != nil {
 		return nil, err
 	}
 	return &jrpc.ProduceResponse{

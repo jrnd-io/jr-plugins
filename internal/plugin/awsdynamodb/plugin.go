@@ -72,7 +72,13 @@ func (p *Plugin) Init(ctx context.Context, cfgBytes []byte) error {
 	return nil
 }
 
-func (p *Plugin) Produce(_ []byte, val []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(_ []byte, val []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
+
+	table := p.configuration.Table
+	if configParams["table"] != "" {
+		table = configParams["table"]
+
+	}
 
 	var jsonMap map[string]interface{}
 	if err := json.Unmarshal(val, &jsonMap); err != nil {
@@ -85,7 +91,7 @@ func (p *Plugin) Produce(_ []byte, val []byte, headers map[string]string, _ map[
 	}
 
 	_, err = p.client.PutItem(context.Background(), &dynamodb.PutItemInput{
-		TableName: aws.String(p.configuration.Table),
+		TableName: aws.String(table),
 		Item:      item,
 	})
 	if err != nil {

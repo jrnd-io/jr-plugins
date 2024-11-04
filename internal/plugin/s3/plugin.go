@@ -75,9 +75,12 @@ func (p *Plugin) Init(ctx context.Context, cfgBytes []byte) error {
 	return nil
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
 
 	bucket := p.bucket
+	if configParams["bucket"] != "" {
+		bucket = configParams["bucket"]
+	}
 	var key string
 
 	if len(k) == 0 || strings.ToLower(string(k)) == "null" {
@@ -87,11 +90,24 @@ func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[st
 		key = string(k)
 	}
 
+	// adding metadata to the object
+	metadata := make(map[string]string)
+	for k, v := range configParams {
+		if strings.HasPrefix(k, "metadata.") {
+			metadata[strings.TrimPrefix(k, "metadata.")] = v
+		}
+	}
+	// adding headers as metadata
+	for k, v := range headers {
+		metadata[k] = v
+	}
+
 	// object will be stored with no content type
 	resp, err := p.client.PutObject(context.Background(), &s3.PutObjectInput{
-		Body:   bytes.NewReader(v),
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
+		Body:     bytes.NewReader(v),
+		Bucket:   aws.String(bucket),
+		Key:      aws.String(key),
+		Metadata: metadata,
 	})
 	if err != nil {
 		return nil, err

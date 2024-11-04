@@ -72,8 +72,12 @@ func (p *Plugin) Init(ctx context.Context, cfgBytes []byte) error {
 	return nil
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
 	bucket := p.bucket
+	if configParams["bucket"] != "" {
+		bucket = configParams["bucket"]
+	}
+
 	var key string
 
 	if len(k) == 0 || strings.ToLower(string(k)) == "null" {

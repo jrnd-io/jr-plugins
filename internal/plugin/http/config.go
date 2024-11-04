@@ -39,10 +39,10 @@ const (
 )
 
 type Endpoint struct {
-	URL     string `json:"url"`
-	Method  Method `json:"method"`
-	Timeout string `json:"timeout"`
-	timeout time.Duration
+	URL          string `json:"url"`
+	Method       Method `json:"method"`
+	Timeout      string `json:"timeout"`
+	timeoutValue time.Duration
 }
 
 type Session struct {
