@@ -67,8 +67,18 @@ func (p *Plugin) Close(_ context.Context) error {
 	return err
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
-	err := p.client.Set(context.Background(), string(k), string(v), p.Ttl).Err()
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
+
+	var err error
+	ttl := p.Ttl
+	if configParams["ttl"] != "" {
+		ttl, err = time.ParseDuration(configParams["ttl"])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = p.client.Set(context.Background(), string(k), string(v), ttl).Err()
 	if err != nil {
 		return nil, err
 	}

@@ -85,9 +85,18 @@ func (p *Plugin) Init(ctx context.Context, configBytes []byte) error {
 	return nil
 }
 
-func (p *Plugin) Produce(key []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(key []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
 
-	collection := p.client.Database(p.database).Collection(p.collection)
+	database := p.database
+	if configParams["database"] != "" {
+		database = configParams["database"]
+	}
+	collectionName := p.collection
+	if configParams["collection"] != "" {
+		collectionName = configParams["collection"]
+	}
+
+	collection := p.client.Database(database).Collection(collectionName)
 
 	var dev map[string]interface{}
 	err := json.Unmarshal(v, &dev)

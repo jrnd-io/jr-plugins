@@ -31,7 +31,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	"github.com/jrnd-io/jr-plugins/internal/plugin"
 	"github.com/jrnd-io/jrv2/pkg/jrpc"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -81,7 +80,20 @@ func (p *Plugin) Init(_ context.Context, cfgBytes []byte) error {
 
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
+
+	partitionKey := p.configuration.PartitionKey
+	if configParams["partition_key"] != "" {
+		partitionKey = configParams["partition_key"]
+	}
+	database := p.configuration.Database
+	if configParams["database"] != "" {
+		database = configParams["database"]
+	}
+	containerName := p.configuration.Container
+	if configParams["container"] != "" {
+		containerName = configParams["container"]
+	}
 
 	// This is ugly but it works
 	var jsonMap map[string]interface{}
@@ -90,26 +102,22 @@ func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[st
 	}
 
 	// getting partition key value
-	pkValue := jsonMap[p.configuration.PartitionKey]
+	pkValue := jsonMap[partitionKey]
 	if pkValue == nil {
 		return nil, fmt.Errorf("Partition key not found in value")
 	}
-	log.Debug().Str("pkValue", pkValue.(string)).Msg("Partition key value")
 
-	container, err := p.client.NewContainer(p.configuration.Database, p.configuration.Container)
+	container, err := p.client.NewContainer(database, containerName)
 	if err != nil {
 		return nil, err
-		log.Fatal().Err(err).Msg("Failed to create container")
 	}
 
 	pk := azcosmos.NewPartitionKeyString(pkValue.(string))
 	resp, err := container.CreateItem(context.Background(), pk, v, nil)
 	if err != nil {
 		return nil, err
-		log.Fatal().Err(err).Msg("Failed to create item")
 	}
 
-	log.Debug().Interface("resp", resp).Msg("Item created")
 	return &jrpc.ProduceResponse{
 		Bytes:   uint64(len(v)),
 		Message: string(resp.ETag),

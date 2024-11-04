@@ -34,6 +34,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/jrnd-io/jr-plugins/internal/plugin"
+	"github.com/jrnd-io/jr-plugins/internal/util"
 	"github.com/jrnd-io/jrv2/pkg/jrpc"
 )
 
@@ -48,9 +49,10 @@ func init() {
 type Plugin struct {
 	configuration Config
 
-	certificate tls.Certificate
-	client      *resty.Client
-	cookiejar   http.CookieJar
+	certificate  tls.Certificate
+	certificates []tls.Certificate
+	client       *resty.Client
+	cookiejar    http.CookieJar
 }
 
 func (p *Plugin) Init(_ context.Context, cfgBytes []byte) error {
@@ -66,16 +68,28 @@ func (p *Plugin) Init(_ context.Context, cfgBytes []byte) error {
 func (p *Plugin) InitializeFromConfig(config Config) error {
 
 	var err error
+	p.client = resty.New()
+	err = p.setConfig(config)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (p *Plugin) setConfig(config Config) error {
+	var err error
 	p.configuration = config
 	if p.configuration.Endpoint.Timeout == "" {
-		p.configuration.Endpoint.timeout = time.Second * 10
+		p.configuration.Endpoint.timeoutValue = time.Second * 10
 	} else {
-		p.configuration.Endpoint.timeout, err = time.ParseDuration(p.configuration.Endpoint.Timeout)
+		p.configuration.Endpoint.timeoutValue, err = time.ParseDuration(p.configuration.Endpoint.Timeout)
 		if err != nil {
 			return err
 		}
-
 	}
+	p.client.SetTimeout(p.configuration.Endpoint.timeoutValue)
 
 	if p.configuration.ErrorHandling.ExpectStatusCode == 0 {
 		p.configuration.ErrorHandling.ExpectStatusCode = 200
@@ -88,13 +102,13 @@ func (p *Plugin) InitializeFromConfig(config Config) error {
 		return fmt.Errorf("KeyFile is set but CertFile is not")
 	}
 
-	certificates := make([]tls.Certificate, 0)
+	p.certificates = make([]tls.Certificate, 0)
 	if p.configuration.TLS.CertFile != "" {
 		p.certificate, err = tls.LoadX509KeyPair(p.configuration.TLS.CertFile, p.configuration.TLS.KeyFile)
 		if err != nil {
 			return err
 		}
-		certificates = append(certificates, p.certificate)
+		p.certificates = append(p.certificates, p.certificate)
 	}
 
 	if p.configuration.Session.UseCookieJar {
@@ -104,14 +118,6 @@ func (p *Plugin) InitializeFromConfig(config Config) error {
 		}
 	}
 
-	p.client = resty.New().
-		SetTimeout(p.configuration.Endpoint.timeout).
-		SetTLSClientConfig(&tls.Config{
-			InsecureSkipVerify: p.configuration.TLS.InsecureSkipVerify,
-			Certificates:       certificates,
-		}).
-		SetHeaders(p.configuration.Headers)
-
 	if p.configuration.Session.UseCookieJar {
 		p.client.SetCookieJar(p.cookiejar)
 	}
@@ -119,6 +125,12 @@ func (p *Plugin) InitializeFromConfig(config Config) error {
 	if p.configuration.TLS.RootCAFile != "" {
 		p.client.SetRootCertificate(p.configuration.TLS.RootCAFile)
 	}
+
+	p.client.
+		SetTLSClientConfig(&tls.Config{
+			InsecureSkipVerify: p.configuration.TLS.InsecureSkipVerify,
+			Certificates:       p.certificates,
+		})
 
 	switch p.configuration.Authentication.Type {
 	case BasicAuth:
@@ -139,18 +151,34 @@ func (p *Plugin) InitializeFromConfig(config Config) error {
 	if p.configuration.Endpoint.Method == "" {
 		p.configuration.Endpoint.Method = POST
 	}
-
 	return nil
-
 }
 
-func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, _ map[string]string) (*jrpc.ProduceResponse, error) {
+func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configParams map[string]string) (*jrpc.ProduceResponse, error) {
 
 	var err error
 
+	cfg := p.configuration
+	err = util.UnmarshalConfig(&cfg, configParams)
+	if err != nil {
+		return nil, err
+	}
+
+	// adding headers
+	hds := make(map[string]string)
+	for k, v := range p.configuration.Headers {
+		hds[k] = v
+	}
+	for k, v := range headers {
+		hds[k] = v
+	}
+
+	p.setConfig(cfg)
+
 	// creating request
-	req := p.client.R().
-		SetHeaders(headers).
+	req := p.client.
+		R().
+		SetHeaders(hds).
 		SetBody(v)
 
 	var resp *resty.Response
