@@ -158,11 +158,13 @@ func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configPa
 
 	var err error
 
-	cfg := p.configuration
-	err = util.UnmarshalConfig(&cfg, configParams)
-	if err != nil {
-		return nil, err
-	}
+	// parse configurable parameters
+	endpointURL := util.GetStringParam("endpoint.url", p.configuration.Endpoint.URL, configParams)
+	timeout := util.GetDurationParam("endpoint.timeout", p.configuration.Endpoint.timeoutValue, configParams)
+	method := util.GetStringParam("endpoint.method", string(p.configuration.Endpoint.Method), configParams)
+	expectStatusCode := util.GetIntParam("error_handling.expect_status_code", p.configuration.ErrorHandling.ExpectStatusCode, configParams)
+	ignoreStatusCode := util.GetBoolParam("error_handling.ignore_status_code", p.configuration.ErrorHandling.IgnoreStatusCode, configParams)
+	insecureSkipTLSVerify := util.GetBoolParam("tls.insecure_skip_verify", p.configuration.TLS.InsecureSkipVerify, configParams)
 
 	// adding headers
 	hds := make(map[string]string)
@@ -173,31 +175,34 @@ func (p *Plugin) Produce(k []byte, v []byte, headers map[string]string, configPa
 		hds[k] = v
 	}
 
-	p.setConfig(cfg)
-
 	// creating request
 	req := p.client.
+		SetTimeout(timeout).
+		SetTLSClientConfig(&tls.Config{
+			InsecureSkipVerify: insecureSkipTLSVerify,
+			Certificates:       p.certificates,
+		}).
 		R().
 		SetHeaders(hds).
 		SetBody(v)
 
 	var resp *resty.Response
 
-	switch p.configuration.Endpoint.Method {
+	switch Method(method) {
 	case POST:
-		resp, err = req.Post(p.configuration.Endpoint.URL)
+		resp, err = req.Post(endpointURL)
 	case PUT:
-		resp, err = req.Put(p.configuration.Endpoint.URL)
+		resp, err = req.Put(endpointURL)
 	default:
-		resp, err = req.Post(p.configuration.Endpoint.URL)
+		resp, err = req.Post(endpointURL)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode() != p.configuration.ErrorHandling.ExpectStatusCode &&
-		!p.configuration.ErrorHandling.IgnoreStatusCode {
+	if resp.StatusCode() != expectStatusCode &&
+		!ignoreStatusCode {
 		return nil, fmt.Errorf("Unexpected status code: %d", resp.StatusCode())
 	}
 

@@ -93,3 +93,43 @@ func setField(config any, key string, value string) error {
 	}
 	return nil
 }
+
+func GetStringParam(key string, def string, params map[string]string) string {
+	if val, ok := params[key]; ok {
+		return val
+	}
+	return def
+}
+
+func GetDurationParam(key string, def time.Duration, params map[string]string) time.Duration {
+	if val, ok := params[key]; ok {
+		d, err := time.ParseDuration(val)
+		if err != nil {
+			return def
+		}
+		return d
+	}
+	return def
+}
+
+func GetIntParam(key string, def int, params map[string]string) int {
+	if val, ok := params[key]; ok {
+		i, err := strconv.Atoi(val)
+		if err != nil {
+			return def
+		}
+		return i
+	}
+	return def
+}
+
+func GetBoolParam(key string, def bool, params map[string]string) bool {
+	if val, ok := params[key]; ok {
+		b, err := strconv.ParseBool(val)
+		if err != nil {
+			return def
+		}
+		return b
+	}
+	return def
+}
