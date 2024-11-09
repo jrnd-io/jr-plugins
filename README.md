@@ -94,3 +94,90 @@ PLUGINS=mongodb \
         http \
         someplugin
 ```
+
+# Plugin parameters
+
+Di seguito sono elencati i parametri che è possibile passare ai plugin da `jr` da linea di comando con: `-p <emitter name>.<parameter name>=<parameter value>`
+
+### AWS DynamoDB Plugin
+
+| Parameter Name | Type   | Example                       | Description                          |
+|----------------|--------|-------------------------------|--------------------------------------|
+| table          | string | `-p <emitter name>.table=myTable` | The name of the DynamoDB table to use. |
+
+### Azure Blob Storage Plugin
+
+| Parameter Name      | Type   | Example                                      | Description                                      |
+|---------------------|--------|----------------------------------------------|--------------------------------------------------|
+| container.name      | string | `-p <emitter name>.container.name=myContainer` | The name of the Azure Blob Storage container.    |
+| metadata.<key>      | string | `-p <emitter name>.metadata.key=value`       | Metadata to be added to the blob.                |
+
+### Azure Cosmos DB Plugin
+
+| Parameter Name      | Type   | Example                                      | Description                                      |
+|---------------------|--------|----------------------------------------------|--------------------------------------------------|
+| partition_key       | string | `-p <emitter name>.partition_key=myPartition`   | The value of the partition key for the item.     |
+| database            | string | `-p <emitter name>.database=myDatabase`         | The name of the database to use.                  |
+| container           | string | `-p <emitter name>.container=myContainer`       | The name of the container to use.                 |
+
+### Cassandra Plugin
+
+| Parameter Name      | Type   | Example                                      | Description                                      |
+|---------------------|--------|----------------------------------------------|--------------------------------------------------|
+| keyspace            | string | `-p <emitter name>.keyspace=myKeyspace`          | The keyspace to use for the Cassandra database.   |
+| table               | string | `-p <emitter name>.table=myTable`                 | The table to insert data into.                    |
+| consistency_level   | string | `-p <emitter name>.consistency_level=QUORUM`     | The consistency level for the operation.          |
+
+### GCS Plugin
+
+| Parameter Name      | Type   | Example                                      | Description                                      |
+|---------------------|--------|----------------------------------------------|--------------------------------------------------|
+| bucket              | string | `-p <emitter name>.bucket=myBucket`                     | The name of the Google Cloud Storage bucket.     |
+
+### HTTP Plugin
+
+| Parameter Name              | Type   | Example                                      | Description                                      |
+|-----------------------------|--------|----------------------------------------------|--------------------------------------------------|
+| endpoint.url                | string | `-p <emitter name>.endpoint.url=http://example.com`  | The URL of the endpoint to send the request to.  |
+| endpoint.method             | string | `-p <emitter name>.endpoint.method=POST`              | The HTTP method to use (e.g., POST, PUT).        |
+| endpoint.timeout            | int    | `-p <emitter name>.endpoint.timeout=10s`                | The timeout duration for the request.             |
+| error_handling.expect_status_code | int | `-p <emitter name>.error_handling.expect_status_code=200` | Expected status code |
+| error_handling.ignore_status_code  | int | `-p <emitter name>.error_handling.ignore_status_code=404` | Ignore status code |
+| tls.insecure_skip_verify    | bool   | `-p <emitter name>.tls.insecure_skip_verify=true`     | Whether to skip TLS verification.                 |
+
+### Lua Script Plugin
+
+| Parameter Name | Type | Example | Description |
+|----------------|------|---------|-------------|
+| N/A            | N/A  | N/A     | No specific parameters are passed in configParams. |
+
+### MongoDB Plugin
+
+| Parameter Name | Type   | Example                                      | Description                                      |
+|----------------|--------|----------------------------------------------|--------------------------------------------------|
+| database        | string | `-p <emitter name>.database=myDatabase`            | The name of the database to use.                  |
+| collection      | string | `-p <emitter name>.collection=myCollection`        | The name of the collection to insert data into.   |
+
+### Redis Plugin
+
+| Parameter Name | Type   | Example                                      | Description                                      |
+|----------------|--------|----------------------------------------------|--------------------------------------------------|
+| ttl            | int    | `-p <emitter name>.ttl=60s`                         | The time-to-live for the key in seconds.         |
+
+### S3 Plugin
+
+| Parameter Name | Type   | Example                                      | Description                                      |
+|----------------|--------|----------------------------------------------|--------------------------------------------------|
+| bucket         | string | `-p <emitter name>.bucket=myBucket`                     | The name of the S3 bucket to use.                |
+
+### WASM Plugin
+
+| Parameter Name | Type | Example | Description |
+|----------------|------|---------|-------------|
+| N/A            | N/A  | N/A     | No specific parameters are passed in configParams. |
+
+### Elastic Plugin
+
+| Parameter Name | Type | Example | Description |
+|----------------|------|---------|-------------|
+| N/A            | N/A  | N/A     | No specific parameters are passed in configParams. |
