@@ -34,17 +34,15 @@ static rd_kafka_t *g_producer = nullptr;
 static int g_server_fd = -1;
 static char g_cleanup_path[256] = {0};  // Store path for cleanup
 
-// Structure to hold config key-value pairs
 typedef struct {
     char key[256];
     char value[1024];
 } ConfigPair;
 
-// Add this structure to store the parsed message parts
 typedef struct {
     char key[MAX_KEY_SIZE];
     char header[MAX_HEADER_SIZE];
-    char *message;  // Will point to the message part in the buffer
+    char *message;
 } ParsedMessage;
 
 // Message callback for librdkafka
@@ -62,7 +60,7 @@ static void dr_msg_cb(rd_kafka_t*,
     }
 }
 
-// Function to read and parse config file
+// Function to read and parse the configuration file
 rd_kafka_conf_t* read_config_file(const char* config_path, char* errstr, size_t errstr_size) {
     FILE* file = fopen(config_path, "r");
     if (!file) {
@@ -117,7 +115,7 @@ rd_kafka_conf_t* read_config_file(const char* config_path, char* errstr, size_t 
 
 // Add this function before main()
 ParsedMessage parse_buffer(char *buffer) {
-    ParsedMessage result = {0};  // Initialize all fields to zero/NULL
+    ParsedMessage result = {0};
     char *saveptr;  // For strtok_r thread safety
 
     // Get key (first part)
@@ -143,12 +141,10 @@ ParsedMessage parse_buffer(char *buffer) {
     return result;
 }
 
-// Add a signal handler function
-static void handle_signal(int sig) {
+static void handle_signal(int) {
     running = 0;
 }
 
-// Add a cleanup function
 static void cleanup(void) {
     if (g_producer) {
         rd_kafka_flush(g_producer, 10 * 1000);
@@ -162,7 +158,6 @@ static void cleanup(void) {
     }
 }
 
-// In main(), modify the initialization code:
 int main(const int argc, char **argv) {
     bool use_tcp = false;
     bool use_fifo = false;
@@ -209,7 +204,6 @@ int main(const int argc, char **argv) {
     }
     const char* topic = argv[optind];
 
-    // ... rest of the code, using base_dir for path construction:
     if (use_fifo) {
         snprintf(fifo_path, sizeof(fifo_path), "%s/jr_kafka_%s_fifo", base_dir, topic);
     }
@@ -218,10 +212,10 @@ int main(const int argc, char **argv) {
     }
 
     char errstr[512];
-    int server_fd, client_fd;
+    int server_fd = 0, client_fd = 0;
     char buffer[BUFFER_SIZE];
 
-    // Read configuration and create producer (existing code)...
+    // Read configuration and create producer
     rd_kafka_conf_t* conf = read_config_file(CONFIG_PATH, errstr, sizeof(errstr));
     if (!conf) {
         fprintf(stderr, "Failed to read config: %s\n", errstr);
@@ -353,9 +347,6 @@ int main(const int argc, char **argv) {
                 // Validate that we have all parts
                 if (!parsed.key[0] || !parsed.header[0] || !parsed.message) {
                     fprintf(stderr, "Invalid message format. Expected: key␞header␞message\n");
-                    if (!use_fifo && client_fd != -1) {
-                        close(client_fd);
-                    }
                     continue;
                 }
 
@@ -434,7 +425,6 @@ int main(const int argc, char **argv) {
 
                 printf("Client connected\n");
 
-                // Rest of the code remains the same...
                 ssize_t bytes_read = read(client_fd, buffer, BUFFER_SIZE - 1);
                 if (bytes_read > 0) {
                     buffer[bytes_read] = '\0';
@@ -445,9 +435,7 @@ int main(const int argc, char **argv) {
                     // Validate that we have all parts
                     if (!parsed.key[0] || !parsed.header[0] || !parsed.message) {
                         fprintf(stderr, "Invalid message format. Expected: key␞header␞message\n");
-                        if (!use_fifo && client_fd != -1) {
-                            close(client_fd);
-                        }
+                        close(client_fd);
                         continue;
                     }
 
