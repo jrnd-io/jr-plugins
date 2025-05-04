@@ -22,7 +22,7 @@
 #define DEFAULT_PORT 8888
 #define MAX_KEY_SIZE 256
 #define MAX_HEADER_SIZE 1024
-#define DELIMITER "|"  // Use Record Separator (␞) character as delimiter
+#define DELIMITER "|"  // Use Record Separator (␞) character as a delimiter
 #define DEFAULT_DIR "/tmp"
 #define MIN_PORT 1
 #define MAX_PORT 65535
@@ -47,16 +47,16 @@ typedef struct {
 
 // Message callback for librdkafka
 static void dr_msg_cb(rd_kafka_t*,
-                     const rd_kafka_message_t *rkmessage,
+                     const rd_kafka_message_t *message,
                      void*) {
-    if (rkmessage->err) {
+    if (message->err) {
         fprintf(stderr, "Message delivery failed: %s\n",
-                rd_kafka_err2str(rkmessage->err));
+                rd_kafka_err2str(message->err));
     } else {
         fprintf(stderr, "Message delivered to topic %s [%d] at offset %" PRId64 "\n",
-                rd_kafka_topic_name(rkmessage->rkt),
-                rkmessage->partition,
-                rkmessage->offset);
+                rd_kafka_topic_name(message->rkt),
+                message->partition,
+                message->offset);
     }
 }
 
@@ -118,7 +118,7 @@ ParsedMessage parse_buffer(char *buffer) {
     ParsedMessage result = {0};
     char *saveptr;  // For strtok_r thread safety
 
-    // Get key (first part)
+    // Get=key (first part)
     char *token = strtok_r(buffer, DELIMITER, &saveptr);
     if (token) {
         strncpy(result.key, token, MAX_KEY_SIZE - 1);
@@ -130,7 +130,7 @@ ParsedMessage parse_buffer(char *buffer) {
             strncpy(result.header, token, MAX_HEADER_SIZE - 1);
             result.header[MAX_HEADER_SIZE - 1] = '\0';
 
-            // Get message (rest of the buffer)
+            // message (rest of the buffer)
             token = strtok_r(nullptr, "", &saveptr);
             if (token) {
                 result.message = token;
@@ -288,7 +288,7 @@ int main(const int argc, char **argv) {
 
         printf("Server listening on %s:%d\n", LOCALHOST, port);
     } else {
-        // Unix domain socket setup with topic-specific path
+        // Unix domain socket setup with a topic-specific path
         struct sockaddr_un server_addr;
 
         server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -366,7 +366,7 @@ int main(const int argc, char **argv) {
                                       parsed.header, -1);
                 }
 
-                // Produce message to Kafka with all parts
+                // Produce a message to Kafka with all parts
                 rd_kafka_resp_err_t err = rd_kafka_producev(producer,
                                         RD_KAFKA_V_TOPIC(topic),
                                         RD_KAFKA_V_KEY(parsed.key, strlen(parsed.key)),
@@ -455,7 +455,7 @@ int main(const int argc, char **argv) {
                                           parsed.header, -1);
                     }
 
-                    // Produce message to Kafka with all parts
+                    // Produce a message to Kafka with all parts
                     rd_kafka_resp_err_t err = rd_kafka_producev(producer,
                                             RD_KAFKA_V_TOPIC(topic),
                                             RD_KAFKA_V_KEY(parsed.key, strlen(parsed.key)),
