@@ -12,7 +12,6 @@
 #include <arpa/inet.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdbool.h>
 
 #define SOCKET_PATH_FORMAT "/tmp/jr_kafka_%s_socket"
 #define FIFO_PATH_FORMAT "/tmp/jr_kafka_%s_fifo"
@@ -31,7 +30,7 @@
 
 // Add these global variables
 static volatile sig_atomic_t running = 1;
-static rd_kafka_t *g_producer = NULL;
+static rd_kafka_t *g_producer = nullptr;
 static int g_server_fd = -1;
 static char g_cleanup_path[256] = {0};  // Store path for cleanup
 
@@ -68,7 +67,7 @@ rd_kafka_conf_t* read_config_file(const char* config_path, char* errstr, size_t 
     FILE* file = fopen(config_path, "r");
     if (!file) {
         snprintf(errstr, errstr_size, "Failed to open config file: %s", config_path);
-        return NULL;
+        return nullptr;
     }
 
     rd_kafka_conf_t* conf = rd_kafka_conf_new();
@@ -106,7 +105,7 @@ rd_kafka_conf_t* read_config_file(const char* config_path, char* errstr, size_t 
                         key, value, errstr);
                 rd_kafka_conf_destroy(conf);
                 fclose(file);
-                return NULL;
+                return nullptr;
             }
             printf("Configured %s=%s\n", key, value);
         }
@@ -128,13 +127,13 @@ ParsedMessage parse_buffer(char *buffer) {
         result.key[MAX_KEY_SIZE - 1] = '\0';
 
         // Get header (second part)
-        token = strtok_r(NULL, DELIMITER, &saveptr);
+        token = strtok_r(nullptr, DELIMITER, &saveptr);
         if (token) {
             strncpy(result.header, token, MAX_HEADER_SIZE - 1);
             result.header[MAX_HEADER_SIZE - 1] = '\0';
 
             // Get message (rest of the buffer)
-            token = strtok_r(NULL, "", &saveptr);
+            token = strtok_r(nullptr, "", &saveptr);
             if (token) {
                 result.message = token;
             }
@@ -171,7 +170,6 @@ int main(const int argc, char **argv) {
     char fifo_path[256];
     char socket_path[256];
     const char *base_dir = DEFAULT_DIR;
-    const char *topic;
 
     int opt;
     while ((opt = getopt(argc, argv, "tp:fd:")) != -1) {  // Removed 'h' from options
@@ -196,10 +194,10 @@ int main(const int argc, char **argv) {
                 break;
             default:
                 fprintf(stderr, "Usage: %s [-t] [-p port] [-f] [-d directory] <topic>\n"
-                        "  -t          Use TCP sockets instead of Unix domain sockets\n"
+                        "  -t          Use TCP sockets\n"
                         "  -p port     Port number for TCP (default: %d)\n"
-                        "  -f          Use named pipe instead of Unix domain socket\n"
-                        "  -d dir      Directory for FIFO/socket (default: %s)\n",
+                        "  -f          Use FIFO (named pipes)\n"
+                        "  -d dir      Directory for FIFO/UDS (Unix domain socket) (default: %s)\n",
                         argv[0], DEFAULT_PORT, DEFAULT_DIR);
                 return EXIT_FAILURE;
         }
@@ -209,7 +207,7 @@ int main(const int argc, char **argv) {
         fprintf(stderr, "Topic name is required\n");
         return EXIT_FAILURE;
     }
-    topic = argv[optind];
+    const char* topic = argv[optind];
 
     // ... rest of the code, using base_dir for path construction:
     if (use_fifo) {
@@ -240,6 +238,16 @@ int main(const int argc, char **argv) {
     // Store producer in global variable for cleanup
     g_producer = producer;
     g_server_fd = server_fd;
+
+    // Set up signal handlers
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
+
+    // Register cleanup function
+    if (atexit(cleanup) != 0) {
+        fprintf(stderr, "Failed to register cleanup function\n");
+        return EXIT_FAILURE;
+    }
 
     if (use_fifo) {
         // Create the FIFO with the topic-specific name
@@ -408,7 +416,7 @@ int main(const int argc, char **argv) {
             FD_ZERO(&readfds);
             FD_SET(server_fd, &readfds);
 
-            int ret = select(server_fd + 1, &readfds, NULL, NULL, &tv);
+            int ret = select(server_fd + 1, &readfds, nullptr, nullptr, &tv);
             if (ret < 0 && errno != EINTR) {
                 perror("Select failed");
                 break;
