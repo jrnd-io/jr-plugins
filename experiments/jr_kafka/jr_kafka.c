@@ -159,19 +159,20 @@ static void cleanup(void) {
 }
 
 int main(const int argc, char **argv) {
-    bool use_tcp = false;
+    bool use_uds = true;
     bool use_fifo = false;
+    bool use_tcp = false;
     int port = DEFAULT_PORT;
+    const char *base_dir = DEFAULT_DIR;
     char fifo_path[256];
     char socket_path[256];
-    const char *base_dir = DEFAULT_DIR;
 
     int opt;
     while ((opt = getopt(argc, argv, "tp:fd:")) != -1) {  // Removed 'h' from options
         switch (opt) {
             case 't':
                 use_tcp = true;
-                break;
+                use_uds = false;
             case 'p':
                 char *endptr;
                 long parsed_port = strtol(optarg, &endptr, 10);
@@ -183,6 +184,7 @@ int main(const int argc, char **argv) {
                 break;
             case 'f':
                 use_fifo = true;
+                use_uds = false;
                 break;
             case 'd':
                 base_dir = optarg;
@@ -204,11 +206,12 @@ int main(const int argc, char **argv) {
     }
     const char* topic = argv[optind];
 
+    if (use_uds) {
+        snprintf(socket_path, sizeof(socket_path), "%s/jr_kafka_%s_socket", base_dir, topic);
+    }
+
     if (use_fifo) {
         snprintf(fifo_path, sizeof(fifo_path), "%s/jr_kafka_%s_fifo", base_dir, topic);
-    }
-    if (!use_tcp && !use_fifo) {
-        snprintf(socket_path, sizeof(socket_path), "%s/jr_kafka_%s_socket", base_dir, topic);
     }
 
     char errstr[512];
