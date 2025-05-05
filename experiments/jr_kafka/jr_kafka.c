@@ -12,6 +12,8 @@
 #include <arpa/inet.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <serdes.h>
+#include <serdes-avro.h>
 
 #define SOCKET_PATH_FORMAT "/tmp/jr_kafka_%s_socket"
 #define FIFO_PATH_FORMAT "/tmp/jr_kafka_%s_fifo"
@@ -27,6 +29,8 @@
 #define MIN_PORT 1
 #define MAX_PORT 65535
 #define LOCALHOST "127.0.0.1"
+#define REGISTRY_CONFIG_PATH "./kafka/registry.properties"
+#define MAX_URL_LENGTH 1024
 
 // Add these global variables
 static volatile sig_atomic_t running = 1;
